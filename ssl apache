@@ -1,0 +1,22 @@
+<IfModule mod_ssl.c>
+<VirtualHost *:443>
+    ServerAdmin admin@digitaledgeadvisor.com
+    ServerName digitaledgeadvisor.com
+    ServerAlias www.digitaledgeadvisor.com
+    DocumentRoot /var/www/digitaledgeadvisor/public_html
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    <Directory /var/www/digitaledgeadvisor/public_html>
+       Options Indexes FollowSymLinks MultiViews
+       AllowOverride All
+       Require all granted
+     </Directory>
+
+
+    SSLCertificateFile /home/ubuntu/SSL_digitaledgeadvisor/digitaledgeadvisor.crt
+    SSLCertificateKeyFile /home/ubuntu/SSL_digitaledgeadvisor/digitaledgeadvisor.key
+    SSLCertificateChainFile /home/ubuntu/SSL_digitaledgeadvisor/intermediate.crt
+
+</VirtualHost>
+</IfModule>
