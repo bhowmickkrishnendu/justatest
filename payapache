@@ -1,0 +1,12 @@
+<VirtualHost *:80>
+    ServerAdmin admin@hello.com
+    ServerName hello.com
+    ServerAlias www.hello.com
+    DocumentRoot /var/www/hello/public_html
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+	Redirect permanent / https://www.hello.com/
+
+
+</VirtualHost>
