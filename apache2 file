@@ -1,0 +1,62 @@
+apt-cache search php7-*
+
+sudo apt install php7.4
+sudo apt-get install php-mysql
+sudo apt install mysql-server
+sudo mysql_secure_installation
+
+
+sudo mysql -u root -p
+
+
+CREATE USER 'phpuser'@'localhost' IDENTIFIED BY 'n1w_pa3swoRd';
+GRANT ALL PRIVILEGES ON hello.* TO 'phpuser'@'localhost';
+FLUSH PRIVILEGES;
+
+
+ALTER USER 'phpuser'@'localhost' IDENTIFIED BY 'n1w_pa3swoRd';
+
+sudo vi /etc/apache2/sites-available/test.conf
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@test.local
+    ServerName test.local
+    DocumentRoot /var/www/html/test
+
+    ErrorLog ${APACHE_LOG_DIR}/test_error.log
+    CustomLog ${APACHE_LOG_DIR}/test_access.log combined
+
+    <Directory /var/www/html/test>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+
+sudo a2ensite test.conf
+
+
+
+proxy
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+
+sudo vi /etc/apache2/sites-available/node.conf
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    ServerName node.krishnendu.online    
+    
+    # Proxy settings
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:3000/
+    ProxyPassReverse / http://localhost:3000/
+
+    ErrorLog ${APACHE_LOG_DIR}/nodeapp_error.log
+    CustomLog ${APACHE_LOG_DIR}/nodeapp_access.log combined
+</VirtualHost>
+
+
+sudo a2ensite node.conf
+
+sudo ufw allow from 10.0.1.72 to any port 287 proto tcp comment 'To allow VPN IP to access SSH port'
