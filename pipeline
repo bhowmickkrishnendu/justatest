@@ -1,0 +1,107 @@
+pipeline{
+  agent any
+  stages{
+    stage("Bitbucket Code Pull"){
+      steps{
+            git credentialsId: 'Lokesh_BitBucket', url: 'https://lokesh_hashcash@bitbucket.org/hashcash_team/paybitoproapigateway.git'
+           }
+          }
+    stage("Maven Build"){
+       steps{
+            sh "mvn clean -s settings.xml"
+            sh "mvn install -s settings.xml"
+             }
+            }
+    stage("Kill old Running JAR file from Server"){
+        steps{
+            sshagent(['10.0.1.66_PaybitoPro_API_Gateway']) {
+            sh '''ssh -o StrictHostKeyChecking=no -p 223 ritzyv@10.0.1.66 'sudo pkill -f PaybitoProApiGateWay-0.0.1.jar' '''
+            }
+        }
+    }
+    stage("Clear Existing Log file"){
+        steps{
+            sshagent(['10.0.1.66_PaybitoPro_API_Gateway']) {
+                sh '''ssh -o StrictHostKeyChecking=no -p 223 ritzyv@10.0.1.66 'truncate -s 0 PaybitoProApiGateWay-0.0.1.log' '''
+            }    
+        }
+    } 
+    stage("Deploy on Server"){
+       steps{
+            sshagent(['10.0.1.66_PaybitoPro_API_Gateway']) {
+            sh "scp -o StrictHostKeyChecking=no -P 223 target/PaybitoProApiGateWay-0.0.1.jar  ritzyv@10.0.1.66:/home/ubuntu"
+        }
+             }
+            } 
+    stage("Run the JAR file on Server"){
+         steps{
+            sshagent(['10.0.1.66_PaybitoPro_API_Gateway']) {
+                sh '''ssh -o StrictHostKeyChecking=no -p 223 ritzyv@10.0.1.66 'nohup java -jar PaybitoProApiGateWay-0.0.1.jar > PaybitoProApiGateWay-0.0.1.log 2>&1 &' '''
+            }
+        }  
+    } 
+  }
+post{
+
+	success {
+		slackSend(
+		    color: 'good', notifyCommitters: true,
+    		message: """
+--:--:--:--:--:--:--:--
+
+Hi @Lokesh Ratnam,\n
+[JENKINS]\nProject: *${env.JOB_NAME}*\nBuild Status: *!!! SUCCESS !!!*\nBuild Number: *${env.BUILD_NUMBER}*\nPlease check your mail for log.
+--:--:--:--:--:--:--:--
+    """,
+    	  	tokenCredentialId: 'Slack_Token',
+    		channel: 'jenkins-deployment' // Replace with the Slack username or channel you want to send the message to
+		)
+
+		emailext (
+		subject: '[JENKINS] - $PROJECT_NAME - Build # $BUILD_NUMBER - SUCCESS !!!', 
+		body: '''Hi Team,\n\n
+
+Your $PROJECT_NAME Job - Build # No. $BUILD_NUMBER - Status - SUCESS !!!\n
+
+Please find Attached log for more details.\n
+
+Thanks !!!\n
+
+            ''',
+		to: 'lokesh@hashcashconsultants.com',
+		attachLog: true
+		)
+
+	}
+        failure {
+		slackSend(
+		    color: 'danger', notifyCommitters: true,
+    		message: """
+--:--:--:--:--:--:--:--
+
+Hi @Lokesh Ratnam,\n
+[JENKINS]\nProject: *${env.JOB_NAME}*\nBuild Status: *!!! FAILED !!!*\nBuild Number: *${env.BUILD_NUMBER}*\nPlease check your mail for log.
+--:--:--:--:--:--:--:--
+    """,
+    	  	tokenCredentialId: 'Slack_Token',
+    		channel: 'jenkins-deployment' // Replace with the Slack username or channel you want to send the message to
+		)
+
+		emailext (
+		subject: '[JENKINS] - $PROJECT_NAME - Build # $BUILD_NUMBER - FAILED !!!',
+		body: '''Hi Team,\n\n
+
+Your $PROJECT_NAME Job - Build # No. $BUILD_NUMBER - Status - FAILED !!!\n
+
+Please find Attached log for more details.\n
+
+Thanks !!!\n
+
+            ''',
+		to: 'lokesh@hashcashconsultants.com',
+		attachLog: true
+		)
+
+		} 
+    }
+}
